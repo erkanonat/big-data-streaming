@@ -1,14 +1,13 @@
 package com.hvl.iot.bigdatastreaming.service;
 
 import com.hvl.iot.bigdatastreaming.model.IoTData;
+import com.hvl.iot.bigdatastreaming.utilities.IoTDataDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.spark.SparkConf;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
-import org.apache.spark.streaming.api.java.JavaInputDStream;
-import org.apache.spark.streaming.api.java.JavaPairInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka010.ConsumerStrategies;
 import org.apache.spark.streaming.kafka010.KafkaUtils;
@@ -27,23 +26,26 @@ import java.util.Set;
 @Slf4j
 public class SparkStreamingService {
 
-    @Value("${}")
+    @Value("${com.iot.app.spark.app.name}")
     private String appName;
 
-    @Value("${}")
+    @Value("${com.iot.app.spark.master}")
     private String master;
 
-    @Value("${}")
+    @Value("${com.iot.app.kafka.zookeeper}")
     private String zookeeperBroker;
 
-    @Value("${}")
+    @Value("${com.iot.app.kafka.brokerlist}")
     private String kafkaBroker;
 
-    @Value("${}")
+    @Value("${com.iot.app.kafka.topic}")
     private String kafkaIoTEventsTopic;
 
-    @Value("${}")
+    @Value("${com.iot.app.spark.checkpoint.dir}")
     private String sparkCheckpointDir;
+
+    @Value("${kafka.iot.group.id}")
+    private String iotKafkaGroupId;
 
     @Autowired
     private SmartCityService smartCityService;
@@ -66,10 +68,12 @@ public class SparkStreamingService {
             Map<String, Object> kafkaParams = new HashMap<String, Object>();
 
             kafkaParams.put("zookeeper.connect", zookeeperBroker);
-            kafkaParams.put("bootstrap.servers", "localhost:9092,anotherhost:9092");
+            kafkaParams.put("bootstrap.servers", kafkaBroker);
             kafkaParams.put("key.deserializer", StringDeserializer.class);
-            kafkaParams.put("value.deserializer", StringDeserializer.class);
-            kafkaParams.put("group.id", "use_a_separate_group_id_for_each_stream");
+            kafkaParams.put("value.deserializer", IoTDataDecoder.class);
+//            kafkaParams.put("group.id", "use_a_separate_group_id_for_each_stream");
+            kafkaParams.put("group.id", iotKafkaGroupId);
+
             kafkaParams.put("auto.offset.reset", "latest");
             kafkaParams.put("enable.auto.commit", false);
 
@@ -77,7 +81,6 @@ public class SparkStreamingService {
             topicsSet.add(kafkaIoTEventsTopic);
 
             //create direct kafka stream
-
             JavaDStream<ConsumerRecord<String, IoTData>> directKafkaStream =
                     KafkaUtils.createDirectStream(
                             jssc, LocationStrategies.PreferConsistent(),

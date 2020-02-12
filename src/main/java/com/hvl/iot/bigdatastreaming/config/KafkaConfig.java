@@ -1,5 +1,6 @@
 package com.hvl.iot.bigdatastreaming.config;
 
+import com.hvl.iot.bigdatastreaming.utilities.IoTDataDecoder;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -48,7 +49,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, iotEventsKafkaServer);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, iotKafkaGroupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, IoTDataDecoder.class);
 
         return new DefaultKafkaConsumerFactory<>(props);
     }

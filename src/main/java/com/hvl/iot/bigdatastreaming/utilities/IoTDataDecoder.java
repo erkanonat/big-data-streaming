@@ -2,6 +2,7 @@ package com.hvl.iot.bigdatastreaming.utilities;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hvl.iot.bigdatastreaming.model.IoTData;
+
 import kafka.serializer.Decoder;
 import kafka.utils.VerifiableProperties;
 

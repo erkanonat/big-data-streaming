@@ -5,7 +5,9 @@ import com.hvl.iot.bigdatastreaming.model.IoTData;
 import com.hvl.iot.bigdatastreaming.model.WindowTrafficData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
@@ -25,7 +27,6 @@ public class SmartCityService implements Serializable {
     @Autowired
     private KafkaService kafkaService;
 
-
     /**
      * Method to get window traffic counts of different type of vehicles for each route.
      * Window duration = 30 seconds and Slide interval = 10 seconds
@@ -43,7 +44,21 @@ public class SmartCityService implements Serializable {
         JavaDStream<WindowTrafficData> trafficDStream = countDStreamPair.map(windowTrafficDataFunc);
 
         // send to kafka  to  store in druid db
-        trafficDStream.foreachRDD(windowTrafficDataJavaRDD -> kafkaService.publish(windowTrafficDataJavaRDD.toString()));
+//        trafficDStream.foreachRDD(windowTrafficDataJavaRDD -> kafkaService.publish(windowTrafficDataJavaRDD.toString()));
+
+        trafficDStream.foreachRDD(new VoidFunction<JavaRDD<WindowTrafficData>>() {
+            @Override
+            public void call(JavaRDD<WindowTrafficData> windowTrafficDataJavaRDD) throws Exception {
+                windowTrafficDataJavaRDD.foreach(new VoidFunction<WindowTrafficData>() {
+                    @Override
+                    public void call(WindowTrafficData windowTrafficData) throws Exception {
+                        System.out.println("publish to kafka : "+ windowTrafficData.toString());
+
+
+                    }
+                });
+            }
+        });
 
     }
 
